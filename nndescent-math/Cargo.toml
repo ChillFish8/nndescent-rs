@@ -1,0 +1,20 @@
+[package]
+name = "nndescent-math"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tracing = { version = "0.1", optional = true }
+
+[features]
+fast-math = []
+simd = []
+test-suite = []
+# Replaces any assert's with debug_asset's which can improve performance
+# but can lead to UB potentially. USE AT YOUR OWN RISK.
+debug-assert = []
+# Disables the compile time feature check, mostly for testing.
+# WARNING: This will not produce optimised code in all likely hood.
+no-feature-check = []
