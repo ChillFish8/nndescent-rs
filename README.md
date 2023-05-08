@@ -32,3 +32,14 @@ insert `fma` instructions without using `core_intrinsics`.
 This also requires that you pass the `-C target-feature=+fma` feature to the compiler via the `RUSTFLAGS` env var,
 if you don't, the compiler will try it's best to do the same job without the actual instructions, leading to
 slower code compared to if you never enabled the `fast-math` feature at all.
+
+### Features
+- ✔️ Dot product distance
+- ✔️ Cosine distance
+- ✔️ Euclidean distance
+- ✔️ Custom distance callback (Both euclidean and angular trees supported)
+- ✔️ High memory implementation
+- ✔️ Initial indexing
+- ❌ Searching (WIP)
+- ❌ Low memory implementation (WIP)
+- ❌ Parrallisation (WIP)
