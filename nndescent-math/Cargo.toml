@@ -2,6 +2,7 @@
 name = "nndescent-math"
 version = "0.1.0"
 edition = "2021"
+description = "Fast vector operations for nndescent."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -9,8 +10,8 @@ edition = "2021"
 tracing = { version = "0.1", optional = true }
 
 [features]
+# Enable fast math intrinsics, often this will result in over a 2x performance improvement.
 fast-math = []
-simd = []
 test-suite = []
 # Replaces any assert's with debug_asset's which can improve performance
 # but can lead to UB potentially. USE AT YOUR OWN RISK.

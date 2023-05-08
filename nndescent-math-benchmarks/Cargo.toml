@@ -1,0 +1,16 @@
+[package]
+name = "nndescent-math-benchmarks"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1"
+hdf5 = "0.8.1"
+tracing-subscriber = "0.3.17"
+
+nndescent-math = { path = "../nndescent-math", features = ["tracing"] }
+
+[features]
+fast-math = ["nndescent-math/fast-math"]

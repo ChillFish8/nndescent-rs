@@ -19,68 +19,11 @@ pub type FastMathAlgorithms = ScalarAlgorithms<math::FastMath>;
 pub type StandardAlgorithms = ScalarAlgorithms<math::StdMath>;
 
 #[cfg(all(
-    feature = "simd",
-    any(
-        target_feature = "avx2",
-        feature = "no-feature-check"
-    )
-))]
-mod avx2;
-
-#[cfg(all(
-    feature = "simd",
-    any(
-        target_feature = "avx2",
-        feature = "no-feature-check"
-    )
-))]
-mod avx2_exports {
-    use crate::math;
-    pub use super::avx2::Avx2Algorithms;
-
-    #[cfg(all(
-        feature = "fast-math",
-        any(
-            target_feature = "fma",
-            feature = "no-feature-check",
-        )
-    ))]
-    pub type FastMathAx2 = Avx2Algorithms<math::FastMath>;
-    pub type StandardAvx2 = Avx2Algorithms<math::StdMath>;
-}
-#[cfg(all(
-    feature = "simd",
-    any(
-        target_feature = "avx2",
-        feature = "no-feature-check"
-    )
-))]
-pub use avx2_exports::*;
-
-#[cfg(all(
     feature = "fast-math",
-    feature = "simd",
-    not(target_feature = "avx2"),
-    not(target_feature = "fma"),
-    not(feature = "no-feature-check"),
-))]
-compile_error!("In order to enable the \"fast-math\" and \"simd\" features you must target both \"avx2\" and \"fma\" features via compiler flags.");
-
-#[cfg(all(
-    feature = "fast-math",
-    not(feature = "simd"),
     not(target_feature = "fma"),
     not(feature = "no-feature-check"),
 ))]
 compile_error!("In order to enable the \"fast-math\" feature you must target \"fma\" feature via compiler flags.");
-
-#[cfg(all(
-    feature = "simd",
-    not(feature = "fast-math"),
-    not(target_feature = "avx2"),
-    not(feature = "no-feature-check"),
-))]
-compile_error!("In order to enable the \"simd\" feature you must target \"avx2\" feature via compiler flags.");
 
 pub(crate) const EPS: f32 = 1e-8;
 
@@ -119,7 +62,7 @@ pub trait DistanceAlgorithms: Default {
 }
 
 #[derive(Debug)]
-pub enum RuntimeSelectedAlgorithm {
+pub enum AutoAlgorithms {
     Scalar(StandardAlgorithms),
     #[cfg(all(
         feature = "fast-math",
@@ -129,26 +72,6 @@ pub enum RuntimeSelectedAlgorithm {
         )
     ))]
     FastMathScalar(FastMathAlgorithms),
-    #[cfg(all(
-        feature = "simd",
-        any(
-            target_feature = "avx2",
-            feature = "no-feature-check"
-        )
-    ))]
-    Avx2(StandardAvx2),
-    #[cfg(all(
-        feature = "simd",
-        feature = "fast-math",
-        any(
-            all(
-                target_feature = "avx2",
-                target_feature = "fma",
-            ),
-            feature = "no-feature-check",
-        )
-    ))]
-    FastMathAvx2(FastMathAx2),
 }
 
 macro_rules! select_method {
@@ -163,26 +86,6 @@ macro_rules! select_method {
                 )
             ))]
             Self::FastMathScalar(a) => a.$method($($arg,)*),
-            #[cfg(all(
-                feature = "simd",
-                any(
-                    target_feature = "avx2",
-                    feature = "no-feature-check"
-                )
-            ))]
-            Self::Avx2(a) => a.$method($($arg,)*),
-            #[cfg(all(
-                feature = "simd",
-                feature = "fast-math",
-                any(
-                    all(
-                        target_feature = "avx2",
-                        target_feature = "fma",
-                    ),
-                    feature = "no-feature-check",
-                )
-            ))]
-            Self::FastMathAvx2(a) => a.$method($($arg,)*),
         }
     }};
 }
@@ -191,26 +94,6 @@ macro_rules! select_method {
 pub fn log_selected() {
     #[cfg(feature = "no-feature-check")]
     tracing::warn!("The compiler has likely not optimised the fast-math and simd methods well. Please disable this feature.");
-
-    #[cfg(all(
-        feature = "fast-math",
-        feature = "simd",
-        target_feature = "avx2",
-        target_feature = "fma",
-    ))]
-    if std::arch::is_x86_feature_detected!("avx2") && std::arch::is_x86_feature_detected!("fma") {
-        tracing::debug!("Using AVX2 and fast-math impl");
-        return;
-    }
-
-    #[cfg(all(
-        feature = "simd",
-        target_feature = "avx2",
-    ))]
-    if std::arch::is_x86_feature_detected!("avx2") {
-        tracing::debug!("Using AVX2 impl");
-        return;;
-    }
 
     #[cfg(all(
         feature = "fast-math",
@@ -229,27 +112,9 @@ pub fn log_selected() {
     tracing::debug!("Using scalar impl")
 }
 
-impl Default for RuntimeSelectedAlgorithm {
+impl Default for AutoAlgorithms {
     #[cfg(target_arch = "x86_64")]
     fn default() -> Self {
-        #[cfg(all(
-            feature = "fast-math",
-            feature = "simd",
-            target_feature = "avx2",
-            target_feature = "fma",
-        ))]
-        if std::arch::is_x86_feature_detected!("avx2") && std::arch::is_x86_feature_detected!("fma") {
-            return Self::FastMathAvx2(Default::default());
-        }
-
-        #[cfg(all(
-            feature = "simd",
-            target_feature = "avx2",
-        ))]
-        if std::arch::is_x86_feature_detected!("avx2") {
-            return Self::Avx2(Default::default());
-        }
-
         #[cfg(all(
             feature = "fast-math",
             target_feature = "fma",
@@ -267,7 +132,7 @@ impl Default for RuntimeSelectedAlgorithm {
     }
 }
 
-impl DistanceAlgorithms for RuntimeSelectedAlgorithm {
+impl DistanceAlgorithms for AutoAlgorithms {
     #[inline]
     unsafe fn norm_squared(&self, arr: &[f32]) -> f32 {
         select_method!(self, norm_squared, arr)
@@ -566,6 +431,6 @@ pub mod test_suite {
 
     #[test]
     fn test_runtime_selection() {
-        test_impl::<RuntimeSelectedAlgorithm>()
+        test_impl::<AutoAlgorithms>()
     }
 }

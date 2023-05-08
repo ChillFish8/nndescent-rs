@@ -1,5 +1,5 @@
 [package]
-name = "nndescent-rs"
+name = "nndescent"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,7 +8,23 @@ edition = "2021"
 [dependencies]
 nndescent-math = { path = "nndescent-math" }
 
+bumpalo = { version = "3.12.1", features = ["collections"] }
+
+thiserror = "1"
+hashbrown = "0.13.2"
+rand = "0.8.5"
+smallvec = "1.10.0"
+
+tracing = { version = "0.1", optional = true }
+
+[features]
+fast-math = ["nndescent-math/fast-math"]
+no-feature-check = ["nndescent-math/no-feature-check"]
+tracing = ["dep:tracing", "nndescent-math/tracing"]
+
 [workspace]
 members = [
-    "nndescent-math"
+    "nndescent-math",
+    "nndescent-math-benchmarks",
+    "nndescent-demo"
 ]
