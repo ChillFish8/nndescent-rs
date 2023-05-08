@@ -2,7 +2,6 @@ use std::fmt::{Debug, Formatter};
 
 use crate::Array;
 
-
 #[derive(Copy, Clone)]
 /// The given
 pub enum Distance {

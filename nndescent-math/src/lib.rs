@@ -10,10 +10,7 @@ mod scalar;
 
 #[cfg(all(
     feature = "fast-math",
-    any(
-        target_feature = "fma",
-        feature = "no-feature-check",
-    )
+    any(target_feature = "fma", feature = "no-feature-check",)
 ))]
 pub type FastMathAlgorithms = ScalarAlgorithms<math::FastMath>;
 pub type StandardAlgorithms = ScalarAlgorithms<math::StdMath>;
@@ -42,17 +39,9 @@ pub trait DistanceAlgorithms: Default {
 
     unsafe fn alternative_dot_adjusted(&self, left: &[f32], right: &[f32]) -> f32;
 
-    unsafe fn cosine(
-        &self,
-        left: &[f32],
-        right: &[f32],
-    ) -> f32;
+    unsafe fn cosine(&self, left: &[f32], right: &[f32]) -> f32;
 
-    unsafe fn alternative_cosine(
-        &self,
-        left: &[f32],
-        right: &[f32],
-    ) -> f32;
+    unsafe fn alternative_cosine(&self, left: &[f32], right: &[f32]) -> f32;
 
     unsafe fn angular_hyperplane<A: DistanceAlgorithms>(
         &self,
@@ -66,10 +55,7 @@ pub enum AutoAlgorithms {
     Scalar(StandardAlgorithms),
     #[cfg(all(
         feature = "fast-math",
-        any(
-            target_feature = "fma",
-            feature = "no-feature-check"
-        )
+        any(target_feature = "fma", feature = "no-feature-check")
     ))]
     FastMathScalar(FastMathAlgorithms),
 }
@@ -95,10 +81,7 @@ pub fn log_selected() {
     #[cfg(feature = "no-feature-check")]
     tracing::warn!("The compiler has likely not optimised the fast-math and simd methods well. Please disable this feature.");
 
-    #[cfg(all(
-        feature = "fast-math",
-        target_feature = "fma",
-    ))]
+    #[cfg(all(feature = "fast-math", target_feature = "fma",))]
     if std::arch::is_x86_feature_detected!("fma") {
         tracing::debug!("Using fast-math impl");
         return;
@@ -115,10 +98,7 @@ pub fn log_selected() {
 impl Default for AutoAlgorithms {
     #[cfg(target_arch = "x86_64")]
     fn default() -> Self {
-        #[cfg(all(
-            feature = "fast-math",
-            target_feature = "fma",
-        ))]
+        #[cfg(all(feature = "fast-math", target_feature = "fma",))]
         if std::arch::is_x86_feature_detected!("fma") {
             return Self::FastMathScalar(Default::default());
         }
@@ -179,7 +159,11 @@ impl DistanceAlgorithms for AutoAlgorithms {
     }
 
     #[inline]
-    unsafe fn angular_hyperplane<A: DistanceAlgorithms>(&self, left: &[f32], right: &[f32]) -> Vector<A> {
+    unsafe fn angular_hyperplane<A: DistanceAlgorithms>(
+        &self,
+        left: &[f32],
+        right: &[f32],
+    ) -> Vector<A> {
         select_method!(self, angular_hyperplane, left, right)
     }
 }
@@ -214,7 +198,6 @@ impl<A: DistanceAlgorithms> DerefMut for Vector<A> {
         &mut self.inner
     }
 }
-
 
 impl<A: DistanceAlgorithms> PartialEq<Self> for Vector<A> {
     fn eq(&self, other: &Self) -> bool {
@@ -295,23 +278,13 @@ impl<A: DistanceAlgorithms> Vector<A> {
     #[inline]
     pub fn cosine(&self, right: &Self) -> f32 {
         assert_len(self.data(), right.data());
-        unsafe {
-            self.algorithm.cosine(
-                self.data(),
-                right.data(),
-            )
-        }
+        unsafe { self.algorithm.cosine(self.data(), right.data()) }
     }
 
     #[inline]
     pub fn alternative_cosine(&self, right: &Self) -> f32 {
         assert_len(self.data(), right.data());
-        unsafe {
-            self.algorithm.alternative_cosine(
-                self.data(),
-                right.data(),
-            )
-        }
+        unsafe { self.algorithm.alternative_cosine(self.data(), right.data()) }
     }
 
     #[inline]
@@ -332,18 +305,16 @@ impl<A: DistanceAlgorithms> Vector<A> {
     #[inline]
     pub fn alternative_dot_adjusted(&self, right: &Self) -> f32 {
         assert_len(self.data(), right.data());
-        unsafe { self.algorithm.alternative_dot_adjusted(self.data(), right.data()) }
+        unsafe {
+            self.algorithm
+                .alternative_dot_adjusted(self.data(), right.data())
+        }
     }
 
     #[inline]
     pub fn angular_hyperplane(&self, right: &Self) -> Self {
         assert_len(self.data(), right.data());
-        unsafe {
-            self.algorithm.angular_hyperplane(
-                self.data(),
-                right.data(),
-            )
-        }
+        unsafe { self.algorithm.angular_hyperplane(self.data(), right.data()) }
     }
 }
 
@@ -362,7 +333,6 @@ pub(crate) fn assert_len(left: &[f32], right: &[f32]) {
         "The lengths of the two arrays must be the same."
     );
 }
-
 
 #[cfg(any(test, feature = "test-suite"))]
 pub mod test_suite {
@@ -384,35 +354,38 @@ pub mod test_suite {
 
     unsafe fn test_cosine<A: DistanceAlgorithms>() {
         let left = Vector::<A>::new(vec![0.5, 0.5, 0.3]);
-        let right =  Vector::<A>::new(vec![0.1, 0.2, 0.3]);
+        let right = Vector::<A>::new(vec![0.1, 0.2, 0.3]);
         let distance = left.cosine(&right);
         assert_eq!(distance, 0.16493326, "Cosine values should match");
     }
 
     unsafe fn test_alternative_cosine<A: DistanceAlgorithms>() {
         let left = Vector::<A>::new(vec![0.5, 0.5, 0.3]);
-        let right =  Vector::<A>::new(vec![0.1, 0.2, 0.3]);
+        let right = Vector::<A>::new(vec![0.1, 0.2, 0.3]);
         let distance = left.alternative_cosine(&right);
-        assert_eq!(distance, 0.26003656, "Alternative cosine values should match");
+        assert_eq!(
+            distance, 0.26003656,
+            "Alternative cosine values should match"
+        );
     }
 
     unsafe fn test_dot<A: DistanceAlgorithms>() {
         let left = Vector::<A>::new(vec![1.0, 2.0, 3.0, 4.0]);
-        let right =  Vector::<A>::new(vec![1.2, 2.3, 3.0, 5.0]);
+        let right = Vector::<A>::new(vec![1.2, 2.3, 3.0, 5.0]);
         let distance = left.dot(&right);
         assert_eq!(distance, 34.8, "Dot values should match")
     }
 
     unsafe fn test_dot_adjusted<A: DistanceAlgorithms>() {
         let left = Vector::<A>::new(vec![0.5, 0.5, 0.3]);
-        let right =  Vector::<A>::new(vec![0.1, 0.2, 0.3]);
+        let right = Vector::<A>::new(vec![0.1, 0.2, 0.3]);
         let distance = left.dot_adjusted(&right);
         assert_eq!(distance, 0.76, "Dot values should match")
     }
 
     unsafe fn test_alternative_dot_adjusted<A: DistanceAlgorithms>() {
         let left = Vector::<A>::new(vec![0.5, 0.5, 0.3]);
-        let right =  Vector::<A>::new(vec![0.1, 0.2, 0.3]);
+        let right = Vector::<A>::new(vec![0.1, 0.2, 0.3]);
         let distance = left.alternative_dot_adjusted(&right);
         assert_eq!(distance, 2.0588937, "Alternative dot values should match")
     }

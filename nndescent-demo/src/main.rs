@@ -1,9 +1,9 @@
 use std::path::Path;
 use std::time::Instant;
+
 use anyhow::Result;
 use hdf5::{Dataset, File};
 use nndescent::{Metric, NNDescentBuilder};
-
 
 fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
@@ -17,11 +17,14 @@ fn main() -> Result<()> {
         .data(data)
         .try_build()?;
 
-    println!("Done! Took {:?} to build, {:?}/vec", start.elapsed(), len as f32 / start.elapsed().as_secs_f32());
+    println!(
+        "Done! Took {:?} to build, {:?}/vec",
+        start.elapsed(),
+        len as f32 / start.elapsed().as_secs_f32()
+    );
 
     Ok(())
 }
-
 
 fn read_json_dataset(path: impl AsRef<Path>) -> Result<Vec<Vec<f32>>> {
     let path = path.as_ref().with_extension("hdf5");

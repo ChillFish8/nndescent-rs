@@ -1,8 +1,8 @@
 use std::fmt::{Debug, Formatter};
 
 use bumpalo::collections::Vec as BumpVec;
+use nndescent_math::{AutoAlgorithms, DistanceAlgorithms};
 use rand::{Rng, SeedableRng};
-use nndescent_math::{DistanceAlgorithms, AutoAlgorithms};
 
 use crate::{Array, BuildError};
 
@@ -43,7 +43,10 @@ pub fn tau_rand(state: &mut RngState) -> f32 {
     (integer as f32 / 0x7FFFFFFF as f32).abs()
 }
 
-pub fn verify_and_normalize(input: Vec<Vec<f32>>, normalize: bool) -> Result<Vec<Array>, BuildError> {
+pub fn verify_and_normalize(
+    input: Vec<Vec<f32>>,
+    normalize: bool,
+) -> Result<Vec<Array>, BuildError> {
     let selector = AutoAlgorithms::default();
     let mut arrays = Vec::with_capacity(input.len());
     for mut array in input {
@@ -310,10 +313,7 @@ mod tests {
     fn test_normalize() {
         let data = vec![vec![1.2, 3.4, 11.2]];
         let data = verify_and_normalize(data, true).unwrap();
-        assert_eq!(
-            data,
-            [array(vec![0.10198832, 0.28896692, 0.95189095]),]
-        )
+        assert_eq!(data, [array(vec![0.10198832, 0.28896692, 0.95189095]),])
     }
 
     #[test]

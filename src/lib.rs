@@ -4,13 +4,13 @@ use std::time::Instant;
 
 use bumpalo::collections::Vec as BumpVec;
 use hashbrown::HashSet;
+use nndescent_math::AutoAlgorithms;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use smallvec::SmallVec;
-use nndescent_math::AutoAlgorithms;
 
-use crate::rp_trees::{init_rp_tree, make_forest, rptree_leaf_array, LeafArray};
 use crate::distances::Distance;
+use crate::rp_trees::{init_rp_tree, make_forest, rptree_leaf_array, LeafArray};
 use crate::utils::{
     checked_heap_push,
     deheap_sort,
@@ -22,8 +22,8 @@ use crate::utils::{
     RngState,
 };
 
-mod rp_trees;
 mod distances;
+mod rp_trees;
 mod utils;
 
 pub type Array = nndescent_math::Vector<AutoAlgorithms>;
@@ -194,7 +194,10 @@ impl NNDescent {
         if builder.data.is_empty() {
             return Err(BuildError::NotEnoughData);
         }
-        let data = utils::verify_and_normalize(builder.data, builder.metric.should_normalize())?;
+        let data = utils::verify_and_normalize(
+            builder.data,
+            builder.metric.should_normalize(),
+        )?;
 
         let n_trees = builder.n_trees.unwrap_or_else(|| {
             let num_entries = data.len() as f32;

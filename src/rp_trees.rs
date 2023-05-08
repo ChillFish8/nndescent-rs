@@ -59,10 +59,8 @@ fn generate_leaf_updates(
         for (i, &p) in block.iter().enumerate() {
             unsafe {
                 for &q in block.get_unchecked(i + 1..) {
-                    let d = distance.get_distance(
-                        data.get_unchecked(p),
-                        data.get_unchecked(q),
-                    );
+                    let d = distance
+                        .get_distance(data.get_unchecked(p), data.get_unchecked(q));
 
                     if d < *distance_thresholds.get_unchecked(p)
                         || d < *distance_thresholds.get_unchecked(q)
@@ -387,7 +385,8 @@ fn select_side<'b>(
     side.reserve(indices.len());
     for pos in indices.iter().copied() {
         // TODO: Check if this is correct.
-        let margin = hyperplane_offset + hyperplane_array.dot(unsafe { data.get_unchecked(pos) });
+        let margin =
+            hyperplane_offset + hyperplane_array.dot(unsafe { data.get_unchecked(pos) });
 
         let side_flag = if margin.abs() < EPS {
             let side_flag = (tau_rand_int(random_state) % 2) as u8;
@@ -567,7 +566,7 @@ mod tests {
         );
 
         let data = &[
-           array(vec![0.20f32, 0.45f32, 1.2f32, 0.1f32, 4.0f32]),
+            array(vec![0.20f32, 0.45f32, 1.2f32, 0.1f32, 4.0f32]),
             Array::from_element(5, 1.2),
             Array::from_element(5, 3.0),
             Array::from_element(5, 0.9),

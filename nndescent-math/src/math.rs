@@ -1,4 +1,3 @@
-
 pub trait Math {
     unsafe fn add(a: f32, b: f32) -> f32;
 
@@ -33,25 +32,19 @@ impl Math for StdMath {
     }
 }
 
-
 #[cfg(all(
     feature = "fast-math",
-    any(
-        target_feature = "fma",
-        feature = "no-feature-check",
-    )
+    any(target_feature = "fma", feature = "no-feature-check",)
 ))]
 pub use fast_math::FastMath;
 
 #[cfg(all(
     feature = "fast-math",
-    any(
-        target_feature = "fma",
-        feature = "no-feature-check",
-    )
+    any(target_feature = "fma", feature = "no-feature-check",)
 ))]
 mod fast_math {
-    use core::intrinsics::{fadd_fast, fsub_fast, fdiv_fast, fmul_fast};
+    use core::intrinsics::{fadd_fast, fdiv_fast, fmul_fast, fsub_fast};
+
     use super::Math;
 
     #[derive(Debug)]
@@ -78,5 +71,4 @@ mod fast_math {
             fdiv_fast(a, b)
         }
     }
-
 }

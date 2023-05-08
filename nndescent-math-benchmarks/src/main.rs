@@ -4,9 +4,9 @@ use std::arch::x86_64::*;
 use std::intrinsics::{fadd_fast, fmul_fast};
 use std::path::Path;
 use std::time::Instant;
+
 use anyhow::Result;
-use hdf5::Dataset;
-use hdf5::File;
+use hdf5::{Dataset, File};
 use nndescent_math::{FastMathAlgorithms, Vector};
 
 macro_rules! timeit {
@@ -19,7 +19,12 @@ macro_rules! timeit {
                 std::hint::black_box(left.$cmd(right));
             }
         }
-        println!("{:<25} Took: {:?}, {:?}/iter", stringify!($cmd), start.elapsed(), start.elapsed() / $runs);
+        println!(
+            "{:<25} Took: {:?}, {:?}/iter",
+            stringify!($cmd),
+            start.elapsed(),
+            start.elapsed() / $runs
+        );
     }};
 }
 
@@ -33,7 +38,12 @@ macro_rules! timeit_direct {
                 std::hint::black_box(unsafe { $cmd(left, right) });
             }
         }
-        println!("{:<25} Took: {:?}, {:?}/iter", stringify!($cmd), start.elapsed(), start.elapsed() / $runs);
+        println!(
+            "{:<25} Took: {:?}, {:?}/iter",
+            stringify!($cmd),
+            start.elapsed(),
+            start.elapsed() / $runs
+        );
     }};
 }
 
@@ -58,7 +68,6 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-
 fn read_json_dataset(path: impl AsRef<Path>) -> Result<Vec<Vector<FastMathAlgorithms>>> {
     let path = path.as_ref().with_extension("hdf5");
     let file = File::open(path)?; // open for reading
@@ -73,7 +82,6 @@ fn read_json_dataset(path: impl AsRef<Path>) -> Result<Vec<Vector<FastMathAlgori
     Ok(resulting_entries)
 }
 
-
 #[inline(always)]
 /// Calculates the dot product and standard L2 squared norms of two
 /// vector in one pass.
@@ -83,9 +91,18 @@ unsafe fn dot_and_norms(left: &[f32], right: &[f32]) -> (f32, f32, f32) {
     let mut right_norm = 0.0;
 
     for k in 0..left.len() {
-        res = fadd_fast(res, fmul_fast(*left.get_unchecked(k), *right.get_unchecked(k)));
-        left_norm = fadd_fast(left_norm, fmul_fast(*left.get_unchecked(k), *left.get_unchecked(k)));
-        right_norm = fadd_fast(right_norm, fmul_fast(*right.get_unchecked(k), *right.get_unchecked(k)));
+        res = fadd_fast(
+            res,
+            fmul_fast(*left.get_unchecked(k), *right.get_unchecked(k)),
+        );
+        left_norm = fadd_fast(
+            left_norm,
+            fmul_fast(*left.get_unchecked(k), *left.get_unchecked(k)),
+        );
+        right_norm = fadd_fast(
+            right_norm,
+            fmul_fast(*right.get_unchecked(k), *right.get_unchecked(k)),
+        );
     }
 
     (res, left_norm, right_norm)
@@ -97,7 +114,10 @@ unsafe fn dot(left: &[f32], right: &[f32]) -> f32 {
     let mut res = 0.0;
 
     for k in 0..left.len() {
-        res = fadd_fast(res, fmul_fast(*left.get_unchecked(k), *right.get_unchecked(k)));
+        res = fadd_fast(
+            res,
+            fmul_fast(*left.get_unchecked(k), *right.get_unchecked(k)),
+        );
     }
 
     res

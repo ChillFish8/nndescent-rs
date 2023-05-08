@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
-use crate::{DistanceAlgorithms, Vector, EPS};
+
 use crate::math::Math;
+use crate::{DistanceAlgorithms, Vector, EPS};
 
 #[derive(Debug)]
 pub struct ScalarAlgorithms<M: Math>(PhantomData<M>);
@@ -14,7 +15,7 @@ impl<M: Math> Default for ScalarAlgorithms<M> {
 impl<M: Math> DistanceAlgorithms for ScalarAlgorithms<M> {
     #[inline]
     unsafe fn norm_squared(&self, arr: &[f32]) -> f32 {
-         self.dot(arr, arr)
+        self.dot(arr, arr)
     }
 
     #[inline]
@@ -24,12 +25,12 @@ impl<M: Math> DistanceAlgorithms for ScalarAlgorithms<M> {
 
     #[inline]
     unsafe fn squared_euclidean(&self, left: &[f32], right: &[f32]) -> f32 {
-         let mut res = 0.0;
+        let mut res = 0.0;
 
-         for k in 0..left.len() {
-             let delta = M::sub(*left.get_unchecked(k), *right.get_unchecked(k));
-             res = M::add(res, M::mul(delta, delta));
-         }
+        for k in 0..left.len() {
+            let delta = M::sub(*left.get_unchecked(k), *right.get_unchecked(k));
+            res = M::add(res, M::mul(delta, delta));
+        }
 
         res
     }
@@ -73,11 +74,7 @@ impl<M: Math> DistanceAlgorithms for ScalarAlgorithms<M> {
     }
 
     #[inline]
-    unsafe fn cosine(
-        &self,
-        left: &[f32],
-        right: &[f32],
-    ) -> f32 {
+    unsafe fn cosine(&self, left: &[f32], right: &[f32]) -> f32 {
         let (result, left_norm, right_norm) = dot_and_norms::<M>(left, right);
 
         if left_norm == 0.0 && right_norm == 0.0 {
@@ -90,11 +87,7 @@ impl<M: Math> DistanceAlgorithms for ScalarAlgorithms<M> {
     }
 
     #[inline]
-    unsafe fn alternative_cosine(
-        &self,
-        left: &[f32],
-        right: &[f32],
-    ) -> f32 {
+    unsafe fn alternative_cosine(&self, left: &[f32], right: &[f32]) -> f32 {
         let (result, left_norm, right_norm) = dot_and_norms::<M>(left, right);
 
         if left_norm == 0.0 && right_norm == 0.0 {
@@ -118,10 +111,7 @@ impl<M: Math> DistanceAlgorithms for ScalarAlgorithms<M> {
 }
 
 #[inline]
-unsafe fn angular_hyperplane<M: Math>(
-    left: &[f32],
-    right: &[f32],
-) -> Vec<f32> {
+unsafe fn angular_hyperplane<M: Math>(left: &[f32], right: &[f32]) -> Vec<f32> {
     let (mut left_norm, mut right_norm) = dual_norms::<M>(left, right);
 
     if left_norm.abs() < EPS {
@@ -137,7 +127,7 @@ unsafe fn angular_hyperplane<M: Math>(
     for i in 0..left.len() {
         let l = *left.get_unchecked(i);
         let r = *right.get_unchecked(i);
-        let value = M::sub(M::div(l, left_norm),  M::div(r, right_norm));
+        let value = M::sub(M::div(l, left_norm), M::div(r, right_norm));
         hyperplane_norm_squared = M::add(hyperplane_norm_squared, M::mul(value, value));
         hyperplane_array.push(value);
     }
@@ -165,8 +155,14 @@ unsafe fn dot_and_norms<M: Math>(left: &[f32], right: &[f32]) -> (f32, f32, f32)
 
     for k in 0..left.len() {
         res = M::add(res, M::mul(*left.get_unchecked(k), *right.get_unchecked(k)));
-        left_norm = M::add(left_norm, M::mul(*left.get_unchecked(k), *left.get_unchecked(k)));
-        right_norm = M::add(right_norm, M::mul(*right.get_unchecked(k), *right.get_unchecked(k)));
+        left_norm = M::add(
+            left_norm,
+            M::mul(*left.get_unchecked(k), *left.get_unchecked(k)),
+        );
+        right_norm = M::add(
+            right_norm,
+            M::mul(*right.get_unchecked(k), *right.get_unchecked(k)),
+        );
     }
 
     (res, left_norm, right_norm)
@@ -179,17 +175,23 @@ unsafe fn dual_norms<M: Math>(left: &[f32], right: &[f32]) -> (f32, f32) {
     let mut right_norm = 0.0;
 
     for k in 0..left.len() {
-        left_norm = M::add(left_norm, M::mul(*left.get_unchecked(k), *left.get_unchecked(k)));
-        right_norm = M::add(right_norm, M::mul(*right.get_unchecked(k), *right.get_unchecked(k)));
+        left_norm = M::add(
+            left_norm,
+            M::mul(*left.get_unchecked(k), *left.get_unchecked(k)),
+        );
+        right_norm = M::add(
+            right_norm,
+            M::mul(*right.get_unchecked(k), *right.get_unchecked(k)),
+        );
     }
 
-    ( left_norm, right_norm)
+    (left_norm, right_norm)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::math::StdMath;
     use super::*;
+    use crate::math::StdMath;
 
     #[test]
     fn test_scalar_std_impl() {
@@ -198,14 +200,10 @@ mod tests {
 
     #[cfg(all(
         feature = "fast-math",
-        any(
-            target_feature = "fma",
-            feature = "no-feature-check",
-        )
+        any(target_feature = "fma", feature = "no-feature-check",)
     ))]
     #[test]
     fn test_scalar_fast_math_impl() {
         crate::test_suite::test_impl::<ScalarAlgorithms<crate::math::FastMath>>();
     }
-
 }
